@@ -1,0 +1,731 @@
+openapi: 3.1.0
+info:
+  title: Todo Application API
+  version: 1.0.0
+  description: |
+    RESTful API for the full-stack web todo application with JWT authentication.
+
+    **Security**: All endpoints (except authentication) require a valid JWT token in the Authorization header.
+
+    **Row-Level Security**: All todo operations are filtered by the authenticated user's UUID from the JWT token.
+
+    **Backward Compatibility**: API is versioned (`/api/v1/`) to support future changes without breaking existing clients.
+  contact:
+    name: Todo Application Support
+    email: support@todo-app.example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://todo-api.onrender.com/api/v1
+    description: Production server (Render)
+  - url: http://localhost:8000/api/v1
+    description: Local development server
+
+tags:
+  - name: Authentication
+    description: User registration, login, and session management
+  - name: Todos
+    description: Todo CRUD operations (requires authentication)
+  - name: Health
+    description: Service health and status checks
+
+paths:
+  /auth/register:
+    post:
+      summary: Register a new user account
+      description: |
+        Creates a new user account with email and password. The password is hashed with Argon2 before storage.
+        Returns a JWT access token for immediate authentication.
+      operationId: registerUser
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegisterRequest'
+            examples:
+              validRegistration:
+                summary: Valid registration
+                value:
+                  email: user@example.com
+                  password: SecurePassword123
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              examples:
+                successfulRegistration:
+                  summary: Successful registration
+                  value:
+                    access_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                    token_type: bearer
+                    user:
+                      id: 550e8400-e29b-41d4-a716-446655440000
+                      email: user@example.com
+                      created_at: '2026-01-07T12:34:56.789Z'
+        '400':
+          description: Invalid input (weak password, invalid email format)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                weakPassword:
+                  summary: Weak password
+                  value:
+                    error: Password must be at least 8 characters with uppercase, lowercase, and number
+                    code: INVALID_PASSWORD
+                    timestamp: '2026-01-07T12:34:56.789Z'
+        '409':
+          description: Email already registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                emailTaken:
+                  summary: Email already exists
+                  value:
+                    error: Email already registered
+                    code: EMAIL_ALREADY_EXISTS
+                    timestamp: '2026-01-07T12:34:56.789Z'
+
+  /auth/login:
+    post:
+      summary: Authenticate and obtain JWT token
+      description: |
+        Authenticates a user with email and password. Returns a JWT access token valid for 24 hours.
+      operationId: loginUser
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLoginRequest'
+            examples:
+              validLogin:
+                summary: Valid login
+                value:
+                  email: user@example.com
+                  password: SecurePassword123
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              examples:
+                successfulLogin:
+                  summary: Successful login
+                  value:
+                    access_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                    token_type: bearer
+                    user:
+                      id: 550e8400-e29b-41d4-a716-446655440000
+                      email: user@example.com
+                      created_at: '2026-01-07T12:34:56.789Z'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidCredentials:
+                  summary: Invalid email or password
+                  value:
+                    error: Invalid email or password
+                    code: INVALID_CREDENTIALS
+                    timestamp: '2026-01-07T12:34:56.789Z'
+
+  /todos:
+    get:
+      summary: Get all todos for authenticated user
+      description: |
+        Retrieves all todos owned by the authenticated user. Results are sorted by creation date (newest first) by default.
+        Supports filtering by completion status and custom sorting.
+      operationId: getTodos
+      tags:
+        - Todos
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: completed
+          in: query
+          description: Filter by completion status
+          required: false
+          schema:
+            type: boolean
+          examples:
+            incomplete:
+              summary: Show incomplete todos
+              value: false
+            complete:
+              summary: Show complete todos
+              value: true
+        - name: sort_order
+          in: query
+          description: Sort order for creation date
+          required: false
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+          examples:
+            newest:
+              summary: Newest first (default)
+              value: desc
+            oldest:
+              summary: Oldest first
+              value: asc
+      responses:
+        '200':
+          description: List of todos retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TodoListResponse'
+              examples:
+                multipleTodos:
+                  summary: Multiple todos
+                  value:
+                    todos:
+                      - id: 770e8400-e29b-41d4-a716-446655440010
+                        user_id: 550e8400-e29b-41d4-a716-446655440000
+                        title: Complete implementation plan
+                        description: Finish data-model.md, contracts/, and quickstart.md
+                        completed: false
+                        created_at: '2026-01-07T12:30:00Z'
+                        updated_at: '2026-01-07T12:30:00Z'
+                      - id: 880e8400-e29b-41d4-a716-446655440011
+                        user_id: 550e8400-e29b-41d4-a716-446655440000
+                        title: Write Playwright E2E tests
+                        description: null
+                        completed: true
+                        created_at: '2026-01-07T12:35:00Z'
+                        updated_at: '2026-01-07T13:00:00Z'
+                    total: 2
+                emptyList:
+                  summary: No todos
+                  value:
+                    todos: []
+                    total: 0
+        '401':
+          description: Missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missingToken:
+                  summary: No authorization header
+                  value:
+                    error: Missing authorization token
+                    code: MISSING_TOKEN
+                    timestamp: '2026-01-07T12:34:56.789Z'
+
+    post:
+      summary: Create a new todo
+      description: |
+        Creates a new todo for the authenticated user. The user_id is extracted from the JWT token.
+      operationId: createTodo
+      tags:
+        - Todos
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TodoCreateRequest'
+            examples:
+              withDescription:
+                summary: Todo with description
+                value:
+                  title: Implement authentication flow
+                  description: Add login, register, and logout functionality
+              withoutDescription:
+                summary: Todo without description
+                value:
+                  title: Deploy to production
+      responses:
+        '201':
+          description: Todo created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TodoResponse'
+              examples:
+                newTodo:
+                  summary: Newly created todo
+                  value:
+                    id: 990e8400-e29b-41d4-a716-446655440012
+                    user_id: 550e8400-e29b-41d4-a716-446655440000
+                    title: Implement authentication flow
+                    description: Add login, register, and logout functionality
+                    completed: false
+                    created_at: '2026-01-07T14:00:00Z'
+                    updated_at: '2026-01-07T14:00:00Z'
+        '400':
+          description: Invalid input (empty title, title too long)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                emptyTitle:
+                  summary: Empty title
+                  value:
+                    error: Title cannot be empty
+                    code: INVALID_TITLE
+                    timestamp: '2026-01-07T12:34:56.789Z'
+        '401':
+          description: Missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /todos/{todo_id}:
+    get:
+      summary: Get a specific todo by ID
+      description: |
+        Retrieves a single todo by its ID. Only returns the todo if it belongs to the authenticated user.
+      operationId: getTodoById
+      tags:
+        - Todos
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: todo_id
+          in: path
+          description: UUID of the todo to retrieve
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: 770e8400-e29b-41d4-a716-446655440010
+      responses:
+        '200':
+          description: Todo retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TodoResponse'
+        '401':
+          description: Missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Todo not found or does not belong to authenticated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                notFound:
+                  summary: Todo not found
+                  value:
+                    error: Todo not found
+                    code: TODO_NOT_FOUND
+                    timestamp: '2026-01-07T12:34:56.789Z'
+
+    put:
+      summary: Update a todo
+      description: |
+        Updates one or more fields of an existing todo. Only the fields provided in the request body will be updated.
+        The updated_at timestamp is automatically set to the current time.
+      operationId: updateTodo
+      tags:
+        - Todos
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: todo_id
+          in: path
+          description: UUID of the todo to update
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: 770e8400-e29b-41d4-a716-446655440010
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TodoUpdateRequest'
+            examples:
+              updateTitle:
+                summary: Update title only
+                value:
+                  title: Finish implementation plan (updated)
+              updateStatus:
+                summary: Mark as complete
+                value:
+                  completed: true
+              updateAll:
+                summary: Update multiple fields
+                value:
+                  title: Complete implementation plan
+                  description: Finished all artifacts
+                  completed: true
+      responses:
+        '200':
+          description: Todo updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TodoResponse'
+              examples:
+                updatedTodo:
+                  summary: Updated todo
+                  value:
+                    id: 770e8400-e29b-41d4-a716-446655440010
+                    user_id: 550e8400-e29b-41d4-a716-446655440000
+                    title: Complete implementation plan
+                    description: Finished all artifacts
+                    completed: true
+                    created_at: '2026-01-07T12:30:00Z'
+                    updated_at: '2026-01-07T14:15:00Z'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Todo not found or does not belong to authenticated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete a todo
+      description: |
+        Permanently deletes a todo. This operation cannot be undone. Only todos belonging to the authenticated user can be deleted.
+      operationId: deleteTodo
+      tags:
+        - Todos
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: todo_id
+          in: path
+          description: UUID of the todo to delete
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: 770e8400-e29b-41d4-a716-446655440010
+      responses:
+        '204':
+          description: Todo deleted successfully (no content)
+        '401':
+          description: Missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Todo not found or does not belong to authenticated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /health:
+    get:
+      summary: Health check endpoint
+      description: |
+        Returns the health status of the API service. Used by monitoring services and deployment platforms (Render).
+      operationId: healthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              examples:
+                healthy:
+                  summary: Service healthy
+                  value:
+                    status: ok
+                    timestamp: '2026-01-07T12:34:56.789Z'
+                    version: 1.0.0
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT token obtained from /auth/login or /auth/register endpoint.
+        Include in Authorization header as: `Authorization: Bearer <token>`
+
+  schemas:
+    UserRegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          description: User email address (must be unique)
+          example: user@example.com
+        password:
+          type: string
+          minLength: 8
+          format: password
+          description: Password (min 8 chars, must contain uppercase, lowercase, and number)
+          example: SecurePassword123
+
+    UserLoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: User email address
+          example: user@example.com
+        password:
+          type: string
+          format: password
+          description: User password
+          example: SecurePassword123
+
+    AuthResponse:
+      type: object
+      required:
+        - access_token
+        - token_type
+        - user
+      properties:
+        access_token:
+          type: string
+          description: JWT access token (valid for 24 hours)
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1NTBlODQwMC1lMjliLTQxZDQtYTcxNi00NDY2NTU0NDAwMDAiLCJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20iLCJpYXQiOjE3MzU2MzIwMDAsImV4cCI6MTczNTcxODQwMH0.signature
+        token_type:
+          type: string
+          enum: [bearer]
+          description: Token type (always "bearer")
+          example: bearer
+        user:
+          $ref: '#/components/schemas/UserResponse'
+
+    UserResponse:
+      type: object
+      required:
+        - id
+        - email
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique user identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        email:
+          type: string
+          format: email
+          description: User email address
+          example: user@example.com
+        created_at:
+          type: string
+          format: date-time
+          description: Account creation timestamp (ISO 8601, UTC)
+          example: '2026-01-07T12:34:56.789Z'
+
+    TodoCreateRequest:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Todo title (required, non-empty after trimming)
+          example: Complete implementation plan
+        description:
+          type: string
+          nullable: true
+          maxLength: 5000
+          description: Optional detailed description
+          example: Finish data-model.md, contracts/, and quickstart.md
+
+    TodoUpdateRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 500
+          description: New todo title (optional)
+          example: Complete implementation plan (updated)
+        description:
+          type: string
+          nullable: true
+          maxLength: 5000
+          description: New description (optional)
+          example: Finished all artifacts
+        completed:
+          type: boolean
+          nullable: true
+          description: New completion status (optional)
+          example: true
+
+    TodoResponse:
+      type: object
+      required:
+        - id
+        - user_id
+        - title
+        - description
+        - completed
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique todo identifier
+          example: 770e8400-e29b-41d4-a716-446655440010
+        user_id:
+          type: string
+          format: uuid
+          description: Owner's user identifier (from JWT)
+          example: 550e8400-e29b-41d4-a716-446655440000
+        title:
+          type: string
+          maxLength: 500
+          description: Todo title
+          example: Complete implementation plan
+        description:
+          type: string
+          nullable: true
+          maxLength: 5000
+          description: Optional description
+          example: Finish data-model.md, contracts/, and quickstart.md
+        completed:
+          type: boolean
+          description: Completion status (false = incomplete, true = complete)
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp (ISO 8601, UTC)
+          example: '2026-01-07T12:30:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp (ISO 8601, UTC)
+          example: '2026-01-07T12:30:00Z'
+
+    TodoListResponse:
+      type: object
+      required:
+        - todos
+        - total
+      properties:
+        todos:
+          type: array
+          items:
+            $ref: '#/components/schemas/TodoResponse'
+          description: List of todos (sorted by created_at desc by default)
+        total:
+          type: integer
+          minimum: 0
+          description: Total number of todos matching the filter
+          example: 42
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - code
+        - timestamp
+      properties:
+        error:
+          type: string
+          description: Human-readable error message
+          example: Invalid email or password
+        code:
+          type: string
+          description: Machine-readable error code
+          example: INVALID_CREDENTIALS
+          enum:
+            - INVALID_CREDENTIALS
+            - INVALID_PASSWORD
+            - INVALID_TITLE
+            - EMAIL_ALREADY_EXISTS
+            - TODO_NOT_FOUND
+            - USER_NOT_FOUND
+            - MISSING_TOKEN
+            - INVALID_TOKEN
+            - EXPIRED_TOKEN
+            - UNAUTHORIZED
+            - VALIDATION_ERROR
+            - INTERNAL_SERVER_ERROR
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp (ISO 8601, UTC)
+          example: '2026-01-07T12:34:56.789Z'
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded, error]
+          description: Service health status
+          example: ok
+        timestamp:
+          type: string
+          format: date-time
+          description: Health check timestamp (ISO 8601, UTC)
+          example: '2026-01-07T12:34:56.789Z'
+        version:
+          type: string
+          description: API version
+          example: 1.0.0
+        database:
+          type: string
+          enum: [connected, disconnected]
+          description: Database connection status
+          example: connected
