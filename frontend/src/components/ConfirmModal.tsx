@@ -1,10 +1,5 @@
 'use client';
 
-<<<<<<< HEAD
-import { ReactNode } from 'react';
-
-=======
->>>>>>> 5d64301ab6d631eca760b1b7d0773fac6881baa7
 interface ConfirmModalProps {
   isOpen: boolean;
   onClose: () => void;

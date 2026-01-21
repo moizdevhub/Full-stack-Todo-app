@@ -1,11 +1,7 @@
 {
-<<<<<<< HEAD
-  "extends": "next/core-web-vitals",
-=======
   "extends": ["next/core-web-vitals", "plugin:@typescript-eslint/recommended"],
   "parser": "@typescript-eslint/parser",
   "plugins": ["@typescript-eslint"],
->>>>>>> 5d64301ab6d631eca760b1b7d0773fac6881baa7
   "rules": {
     "@typescript-eslint/no-unused-vars": "error",
     "@typescript-eslint/no-explicit-any": "warn",

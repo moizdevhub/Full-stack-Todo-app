@@ -404,11 +404,7 @@ export default function TodosPage() {
                         style={{
                           backgroundColor: newTodoTagIds.includes(tag.id) ? tag.color : `${tag.color}20`,
                           color: newTodoTagIds.includes(tag.id) ? 'white' : tag.color,
-<<<<<<< HEAD
-                          ringColor: tag.color
-=======
                           boxShadow: newTodoTagIds.includes(tag.id) ? `0 0 0 2px ${tag.color}` : undefined
->>>>>>> 5d64301ab6d631eca760b1b7d0773fac6881baa7
                         }}
                       >
                         {newTodoTagIds.includes(tag.id) ? '✓ ' : ''}🏷️ {tag.name}
@@ -672,11 +668,7 @@ export default function TodosPage() {
                                   style={{
                                     backgroundColor: editTagIds.includes(tag.id) ? tag.color : `${tag.color}20`,
                                     color: editTagIds.includes(tag.id) ? 'white' : tag.color,
-<<<<<<< HEAD
-                                    ringColor: tag.color
-=======
                                     boxShadow: editTagIds.includes(tag.id) ? `0 0 0 2px ${tag.color}` : undefined
->>>>>>> 5d64301ab6d631eca760b1b7d0773fac6881baa7
                                   }}
                                 >
                                   {editTagIds.includes(tag.id) ? '✓ ' : ''}🏷️ {tag.name}

@@ -6,31 +6,24 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import LoadingSpinner from '@/components/LoadingSpinner';
-<<<<<<< HEAD
 import ErrorBox from '@/components/ErrorBox';
 import { validateSignupForm } from '@/lib/signup-validation';
-=======
->>>>>>> 5d64301ab6d631eca760b1b7d0773fac6881baa7
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-<<<<<<< HEAD
   const [fieldErrors, setFieldErrors] = useState<{
     email?: string;
     password?: string;
     confirmPassword?: string;
   }>({});
   const [backendError, setBackendError] = useState<string | null>(null);
-=======
->>>>>>> 5d64301ab6d631eca760b1b7d0773fac6881baa7
   const router = useRouter();
   const { register } = useAuth();
   const { showToast } = useToast();
 
-<<<<<<< HEAD
   // Helper function to detect duplicate email errors from backend (HTTP 409)
   const isDuplicateEmailError = (error: any): boolean => {
     // Check if Axios error with status code 409 (Conflict)
@@ -70,38 +63,6 @@ export default function RegisterPage() {
     // Clear any existing errors on successful validation
     setFieldErrors({});
     setBackendError(null);
-=======
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    // Validate password match
-    if (password !== confirmPassword) {
-      showToast('Passwords do not match', 'error');
-      return;
-    }
-
-    // Validate password strength (must match backend requirements)
-    if (password.length < 8) {
-      showToast('Password must be at least 8 characters long', 'error');
-      return;
-    }
-
-    if (!/[a-z]/.test(password)) {
-      showToast('Password must contain at least one lowercase letter', 'error');
-      return;
-    }
-
-    if (!/[A-Z]/.test(password)) {
-      showToast('Password must contain at least one uppercase letter', 'error');
-      return;
-    }
-
-    if (!/[0-9]/.test(password)) {
-      showToast('Password must contain at least one number', 'error');
-      return;
-    }
-
->>>>>>> 5d64301ab6d631eca760b1b7d0773fac6881baa7
     setIsLoading(true);
 
     try {
@@ -109,7 +70,6 @@ export default function RegisterPage() {
       showToast('Account created successfully!', 'success');
       router.push('/todos');
     } catch (err) {
-<<<<<<< HEAD
       // Check if it's a 409 Conflict error (duplicate email)
       if (isDuplicateEmailError(err)) {
         setBackendError("This email is already registered. Please try another email.");
@@ -119,9 +79,6 @@ export default function RegisterPage() {
         const errorMessage = err instanceof Error ? err.message : 'Registration failed. Please try again.';
         showToast(errorMessage, 'error');
       }
-=======
-      showToast(err instanceof Error ? err.message : 'Registration failed. Please try again.', 'error');
->>>>>>> 5d64301ab6d631eca760b1b7d0773fac6881baa7
     } finally {
       setIsLoading(false);
     }
@@ -142,12 +99,8 @@ export default function RegisterPage() {
           </p>
         </div>
         <form className="mt-8 space-y-6 animate-fade-in" onSubmit={handleSubmit}>
-<<<<<<< HEAD
           <div className="space-y-4">
             {/* Email Field */}
-=======
-          <div className="rounded-md shadow-sm -space-y-px">
->>>>>>> 5d64301ab6d631eca760b1b7d0773fac6881baa7
             <div>
               <label htmlFor="email-address" className="sr-only">
                 Email address
@@ -158,7 +111,6 @@ export default function RegisterPage() {
                 type="email"
                 autoComplete="email"
                 required
-<<<<<<< HEAD
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                 placeholder="Email address"
                 value={email}
@@ -191,15 +143,6 @@ export default function RegisterPage() {
             </div>
 
             {/* Password Field */}
-=======
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={isLoading}
-              />
-            </div>
->>>>>>> 5d64301ab6d631eca760b1b7d0773fac6881baa7
             <div>
               <label htmlFor="password" className="sr-only">
                 Password
@@ -210,7 +153,6 @@ export default function RegisterPage() {
                 type="password"
                 autoComplete="new-password"
                 required
-<<<<<<< HEAD
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                 placeholder="Password (min 8 chars, 1 uppercase, 1 lowercase, 1 number)"
                 value={password}
@@ -232,15 +174,6 @@ export default function RegisterPage() {
             </div>
 
             {/* Confirm Password Field */}
-=======
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Password (min 8 chars, 1 uppercase, 1 lowercase, 1 number)"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={isLoading}
-              />
-            </div>
->>>>>>> 5d64301ab6d631eca760b1b7d0773fac6881baa7
             <div>
               <label htmlFor="confirm-password" className="sr-only">
                 Confirm Password
@@ -251,7 +184,6 @@ export default function RegisterPage() {
                 type="password"
                 autoComplete="new-password"
                 required
-<<<<<<< HEAD
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                 placeholder="Confirm password"
                 value={confirmPassword}
@@ -270,14 +202,6 @@ export default function RegisterPage() {
                   onDismiss={() => dismissError('confirmPassword')}
                 />
               )}
-=======
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Confirm password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                disabled={isLoading}
-              />
->>>>>>> 5d64301ab6d631eca760b1b7d0773fac6881baa7
             </div>
           </div>
 
